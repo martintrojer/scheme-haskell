@@ -22,9 +22,21 @@ str = do
   spaces
   return $ VStr val
 
+true :: Parser Value
+true = do
+  _ <- string "true"
+  spaces
+  return $ VBool True
+
+false :: Parser Value
+false = do
+  _ <- string "false"
+  spaces
+  return $ VBool False
+
 value :: Parser Value
 value =
-  VNum <$> num <|> str
+  VNum <$> num <|> str <|> try true <|> try false
 
 comb :: Parser Expr
 comb = do

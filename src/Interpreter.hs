@@ -19,10 +19,12 @@ evalExpr (EComb (x:xs)) = do
   case ex of
     (EProc fn) -> do
       env <- S.get
-      let (newEnv, res) = fn env xs
+      let (res, newEnv) = fn env xs
       S.put newEnv
       return res
     _ -> error "Invalid combination"
+
+evalExpr e = error $ "Invalid state " ++ show e
 
 eval :: Env -> Expr -> (Expr, Env)
 eval env expr = I.runIdentity $ S.runStateT (evalExpr expr) env

@@ -12,6 +12,9 @@ testParser = hspec $ do
       parseValue "42.42" `shouldBe` (Just $ VNum 42.42)
     it "VStr" $
       parseValue "\"foo\"" `shouldBe` (Just $ VStr "foo")
+    it "VBool" $ do
+      parseValue "true" `shouldBe` (Just $ VBool True)
+      parseValue "false" `shouldBe` (Just $ VBool False)
 
   describe "Expressions" $ do
     it "EValue VNum" $
@@ -21,5 +24,5 @@ testParser = hspec $ do
     it "ESymbol" $
       parseExpr "foobar" `shouldBe` (Just $ ESymbol "foobar")
     it "EComb" $
-      parseExpr "(1 two \"three\" (1))" `shouldBe`
-      (Just $ (EComb [EValue (VNum 1.0),ESymbol "two",EValue (VStr "three"),EComb [EValue (VNum 1.0)]]))
+      parseExpr "(1 two \"three\" (false))" `shouldBe`
+      (Just $ EComb [EValue (VNum 1.0), ESymbol "two", EValue (VStr "three"), EComb [EValue (VBool False)]])

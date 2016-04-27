@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Parser (Expr(..), Value(..), parseValue, parseExpr) where
+module Parser (parseValue, parseExpr) where
 
 import Data.Text
 import Text.Parsec.Char
@@ -8,22 +8,13 @@ import Text.Parsec.Combinator
 import Text.Parsec.Prim
 import Text.Parsec.Text
 
-data Value
-  = VNum Double
-  | VStr String
-  deriving (Show, Eq)
-
-data Expr
-  = EValue Value
-  | ESymbol String
-  | EComb [Expr]
-  deriving (Show, Eq)
+import Types
 
 num :: Parser Double
 num = read <$> many1 (oneOf "0123456789.") <* spaces
 
 name :: Parser String
-name = many1 (oneOf "abcdefghijklmnopqrstuvwxyz") <* spaces
+name = many1 (oneOf "abcdefghijklmnopqrstuvwxyz+-*/") <* spaces
 
 -- a = parseTest num $ pack "12"
 -- a' = parseTest name $ pack "foo"

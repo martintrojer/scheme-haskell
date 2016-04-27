@@ -2,6 +2,7 @@ module ParserTest (testParser) where
 
 import Test.Hspec
 
+import Types
 import Parser
 
 testParser :: IO ()

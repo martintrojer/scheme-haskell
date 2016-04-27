@@ -1,7 +1,9 @@
 module Main where
 
 import ParserTest
+import BuiltInsTest
 
 main :: IO ()
-main =
+main = do
   testParser
+  testBuiltIns

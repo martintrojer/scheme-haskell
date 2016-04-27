@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Parser (parseValue, parseExpr) where
 
 import Data.Text
@@ -14,10 +12,7 @@ num :: Parser Double
 num = read <$> many1 (oneOf "0123456789.") <* spaces
 
 name :: Parser String
-name = many1 (oneOf "abcdefghijklmnopqrstuvwxyz+-*/") <* spaces
-
--- a = parseTest num $ pack "12"
--- a' = parseTest name $ pack "foo"
+name = many1 (oneOf "abcdefghijklmnopqrstuvwxyz+-*/=<>") <* spaces
 
 str :: Parser Value
 str = do
@@ -30,10 +25,6 @@ str = do
 value :: Parser Value
 value =
   VNum <$> num <|> str
-
--- b = parseTest value $ pack "42.42"
--- b'' = parseTest value $ pack "\"barf\""
--- b''' = parseTest value $ pack "barf"
 
 comb :: Parser Expr
 comb = do
@@ -50,11 +41,6 @@ expr =
   EValue <$> value
   <|> ESymbol <$> name
   <|> comb
-
--- c = parseTest expr $ pack "42"
--- c' = parseTest expr $ pack "\"bar\""
--- c'' = parseTest expr $ pack "foo"
--- c''' = parseTest expr $ pack "(1 two \"three\" (1))"
 
 parseValue :: String -> Maybe Value
 parseValue s =

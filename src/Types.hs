@@ -1,11 +1,11 @@
 module Types(Value(..), Expr(..), Env(..)) where
 
-import Control.Monad.Trans.State
 import Data.Map
 
 data Value
   = VNum Double
   | VStr String
+  | VBool Bool
   deriving (Eq)
 
 data Expr
@@ -16,8 +16,10 @@ data Expr
   | EProc (Env -> [Expr] -> (Env, Expr))
 
 instance Show Value where
-  show (VNum v) = show v
-  show (VStr s) = show s
+  show (VNum v)      = show v
+  show (VStr s)      = show s
+  show (VBool True)  = "#t"
+  show (VBool False) = "#f"
 
 instance Show Expr where
   show (EValue v)  = show v

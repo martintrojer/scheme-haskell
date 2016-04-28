@@ -1,91 +1,91 @@
 module BuiltIns (baseEnv) where
 
+import Control.Monad
+import Control.Monad.Trans.State
 import qualified Data.Map as M
 import Interpreter
 import Types
 
-evalExpr :: Env -> Expr -> Expr
-evalExpr env = fst . eval env
-
 --- +, -, *, /
 
-aritFn :: (Double -> Double -> Double) -> Env -> [Expr] -> (Expr, Env)
-aritFn fn env exprs = (EValue . VNum $ result, env)
+aritFn :: (Double -> Double -> Double) -> [Expr] -> State Env Expr
+aritFn fn exprs = do
+  xs <- mapM evalExpr exprs
+  let res =
+        case xs of
+          (EValue(VNum first):rest) ->
+            foldl (\acc v ->
+                    case v of
+                      EValue(VNum w) -> fn acc w
+                      _              -> aritError)
+            first rest
+          _ -> aritError
+  return . EValue . VNum $ res
   where aritError = error "arithmetic error"
-        result =
-          case map (evalExpr env) exprs of
-            (EValue(VNum first):vs) ->
-              foldl (\acc v ->
-                      case v of
-                        EValue(VNum w) -> fn acc w
-                        _              -> aritError)
-              first vs
-            _ -> aritError
 
 --- =, >, <, <=, >=
 
-compFn :: (Double -> Double -> Bool) -> Env -> [Expr] -> (Expr, Env)
-compFn fn env exprs = (EValue . VBool . fst $ result, env)
+compFn :: (Double -> Double -> Bool) -> [Expr] -> State Env Expr
+compFn fn exprs = do
+  xs <- mapM evalExpr exprs
+  let res =
+        case xs of
+          (EValue(VNum first):rest) ->
+            foldl (\(acc, prev) v ->
+                    case v of
+                      EValue(VNum w) -> (acc && fn prev w, w)
+                      _              -> compError)
+            (True, first) rest
+          _ -> compError
+  return . EValue . VBool . fst $ res
   where compError = error "comparison error"
-        result =
-          case map (evalExpr env) exprs of
-            (EValue(VNum first):vs) ->
-              foldl (\(acc, prev) v ->
-                      case v of
-                        EValue(VNum w) -> (acc && fn prev w, w)
-                        _              -> compError)
-              (True, first) vs
-            _ -> compError
 
 illegalArguments :: String -> t
 illegalArguments fn = error $ "Illegal arguments " ++ fn
 
 --- not
 
-notFn :: Env -> [Expr] -> (Expr, Env)
-notFn env [expr] = (EValue . VBool $ result, env)
-  where result =
-          case evalExpr env expr of
-            (EValue(VBool v)) -> not v
-            _                 -> illegalArguments "not"
-notFn _ _ = illegalArguments "not"
+notFn :: [Expr] -> State Env Expr
+notFn [expr] = do
+  x <- evalExpr expr
+  let result =
+        case x of
+          EValue(VBool w) -> not w
+          _               -> illegalArguments "not"
+  return . EValue . VBool $ result
+notFn _ = illegalArguments "not"
 
 --- if
 
-runIf :: Env -> Expr -> Expr -> Maybe Expr -> (Expr, Env)
-runIf env cond pos (Just neg) =
-  case evalExpr env cond of
-    (EValue(VBool True))  -> eval env pos
-    (EValue(VBool False)) -> eval env neg
-    _                     -> illegalArguments "if"
-runIf env cond pos Nothing =
-  case evalExpr env cond of
-    (EValue(VBool True))  -> eval env pos
-    (EValue(VBool False)) -> (ENull, env)
-    _                     -> illegalArguments "if"
+runIf :: Expr -> Expr -> Maybe Expr -> State Env Expr
+runIf cond pos negm = do
+  x <- evalExpr cond
+  case (x, negm) of
+    (EValue(VBool True), _)         -> evalExpr pos
+    (EValue(VBool False), Just neg) -> evalExpr neg
+    (EValue(VBool False), Nothing)  -> return ENull
+    _                               -> illegalArguments "if predicate must return bool"
 
-ifFn :: Env -> [Expr] -> (Expr, Env)
-ifFn env [condExpr, posExpr, negExpr] = runIf env condExpr posExpr $ Just negExpr
-ifFn env [condExpr, posExpr] = runIf env condExpr posExpr Nothing
-ifFn _ _ = illegalArguments "if"
+ifFn :: [Expr] -> State Env Expr
+ifFn [condExpr, posExpr, negExpr] = runIf condExpr posExpr $ Just negExpr
+ifFn [condExpr, posExpr]          = runIf condExpr posExpr Nothing
+ifFn _                            = illegalArguments "if"
 
---- cond
+-- cond
 
-runCond :: Env -> [Expr] -> Maybe Expr
-runCond env [ESymbol "else", posExpr] = Just . evalExpr env $ posExpr
-runCond env [condExpr, posExpr] =
-  case evalExpr env condExpr of
-    (EValue(VBool True))  -> Just . evalExpr env $ posExpr
-    (EValue(VBool False)) -> Nothing
-    _                     -> illegalArguments "cond"
-runCond _ _ = illegalArguments "cond"
-
-condFn :: Env -> [Expr] -> (Expr, Env)
-condFn env ((EComb c):exprs) =
-  case runCond env c of
-    Just e  -> (e, env)
-    Nothing -> condFn env exprs
-condFn env _ = (ENull, env)
+condFn :: [Expr] -> State Env Expr
+condFn (EComb c:rest) =
+  case c of
+    [ESymbol "else", pos] -> evalExpr pos
+    [cond, pos] -> do
+      res <- evalExpr cond
+      case res of
+        EValue(VBool True)  -> evalExpr pos
+        EValue(VBool False) -> condFn rest
+        _ -> illegalArguments "cond predicate must return bool"
+    _ -> illegalArguments "cond requires pairs of 2"
+condFn [] = return ENull
+condFn _  = illegalArguments "cond"
 
 -------------------------------------------------------------------
 

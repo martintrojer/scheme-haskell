@@ -1,5 +1,6 @@
 module Types(Value(..), Expr(..), Env(..)) where
 
+import Control.Monad.Trans.State
 import Data.Map
 
 data Value
@@ -14,7 +15,9 @@ data Expr
   | EComb [Expr]
   | ENull
 
-  | EProc (Env -> [Expr] -> (Expr, Env))
+  | EProc ([Expr] -> State Env Expr)
+
+newtype Env = Env { getEnv :: Map String Expr}
 
 instance Show Value where
   show (VNum v)      = show v
@@ -35,5 +38,3 @@ instance Eq Expr where
   EComb c1   == EComb c2   = c1 == c2
   ENull      == ENull      = True
   _          == _          = False
-
-newtype Env = Env { getEnv :: Map String Expr}

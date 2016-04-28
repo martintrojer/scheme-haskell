@@ -6,7 +6,10 @@ Copyright Martin Trojer <martin.trojer@gmail.com>
 
 ## Usage
 
+Install [stack](http://docs.haskellstack.org/en/stable/README/)
+
 ```
+$ stack build
 $ stack exec mtscheme-exe
 Welcome to mtscheme v0.1
 > (define (map f l) (if (not (null? l)) (cons (f (car l)) (map f (cdr l)))))

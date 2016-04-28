@@ -23,6 +23,8 @@ testParser = hspec $ do
       parseExpr "\"foobar\"" `shouldBe` (Just $ EValue (VStr "foobar"))
     it "ESymbol" $
       parseExpr "foobar" `shouldBe` (Just $ ESymbol "foobar")
-    it "EComb" $
+    it "EComb" $ do
       parseExpr "(1 two \"three\" (false))" `shouldBe`
-      (Just $ EComb [EValue (VNum 1.0), ESymbol "two", EValue (VStr "three"), EComb [EValue (VBool False)]])
+        (Just $ EComb [EValue (VNum 1.0), ESymbol "two", EValue (VStr "three"), EComb [EValue (VBool False)]])
+
+      parseExpr "(define a 1)" `shouldBe` (Just $ EComb [ESymbol "define", ESymbol "a", EValue (VNum 1)])

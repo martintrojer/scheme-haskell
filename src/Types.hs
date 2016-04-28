@@ -14,6 +14,7 @@ data Expr
   | ESymbol String
   | EComb [Expr]
   | EProc ([Expr] -> State Env Expr)
+  | EFunc [Expr] [Expr]
 
   | ENull
 
@@ -31,7 +32,8 @@ instance Show Expr where
   show (EValue v)  = show v
   show (ESymbol v) = "#" ++ v
   show (EComb vs)  = show vs
-  show (EProc _)   = "Fn"
+  show (EProc _)   = "coreFn"
+  show (EFunc _ _) = "defFn"
   show ENull       = "nil"
 
 instance Eq Expr where

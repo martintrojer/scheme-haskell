@@ -120,12 +120,44 @@ testBuiltIns = hspec $ do
       evalStr "(null? (list 1))" `shouldBe` false
       evalStr "(null? (cdr (list 1)))" `shouldBe` true
 
-  describe "define" $
+  describe "define" $ do
     it "define" $
       let (res, env) = evalBase "(define kalle (+ 41 1))"
       in do
         res `shouldBe` ENull
         (fst . eval' env $ "kalle") `shouldBe` num 42
+
+    it "functions" $
+      let (res1, env1) = evalBase "(define (add a b) (+ a b))"
+          (res2, _)    = eval' env1 "(add 1 2)"
+      in do
+        res1 `shouldBe` ENull
+        res2 `shouldBe` num 3
+
+    it "fact" $
+      let (res1, env1) = evalBase "(define (fact x) (if (= x 0) 1 (* x (fact (- x 1)))))"
+          (res2, _)    = eval' env1 "(fact (+ 5 5))"
+      in do
+        res1 `shouldBe` ENull
+        res2 `shouldBe` num 3628800
+
+    it "worker" $
+      let (res1, env1) = evalBase "(define (add a b) (begin (define (worker x y) (+ x y)) (worker a b)))"
+          (res2, _)    = eval' env1 "(add 1 3)"
+      in do
+        res1 `shouldBe` ENull
+        res2 `shouldBe` num 4
+
+  describe "lambda" $ do
+    it "lambda" $
+      let (_, env) = evalBase "(define inc (lambda (x) (+ x 1)))"
+          (res, _)  = eval' env "(inc 1)"
+      in res `shouldBe` num 2
+
+    it "map" $
+      let (_, env) = evalBase "(define (map f l) (if (not (null? l)) (cons (f (car l)) (map f (cdr l)))))"
+          (res, _) = eval' env "(map (lambda (x) (* x x)) (list 1 2 3))"
+      in res `shouldBe` EComb [num 1, num 4, num 9]
 
   describe "let" $ do
     it "let" $ do
@@ -139,3 +171,8 @@ testBuiltIns = hspec $ do
         (fst . eval' env1 $ "a") `shouldBe` num 1
         res2 `shouldBe` num 42
         (fst . eval' env2 $ "a") `shouldBe` num 1
+
+  describe "begin" $
+    it "begin" $ do
+      evalStr "(begin 1 2)" `shouldBe` num 2
+      evalStr "(begin (define x 2) x)" `shouldBe` num 2

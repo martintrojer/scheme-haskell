@@ -72,7 +72,7 @@ ifFn [condExpr, posExpr, negExpr] = runIf condExpr posExpr $ Just negExpr
 ifFn [condExpr, posExpr]          = runIf condExpr posExpr Nothing
 ifFn _                            = illegalArguments "if"
 
--- cond
+--- cond
 
 condFn :: [Expr] -> State Env Expr
 condFn (EComb c:rest) =
@@ -88,7 +88,7 @@ condFn (EComb c:rest) =
 condFn [] = return ENull
 condFn _  = illegalArguments "cond"
 
--- cons
+--- cons
 
 consFn :: [Expr] -> State Env Expr
 consFn [e1, e2] = do
@@ -100,7 +100,7 @@ consFn [e1, e2] = do
     (ex1, ex2) -> return . EComb $ [ex1, ex2]
 consFn _ = illegalArguments "cons"
 
--- list
+--- list
 
 listFn :: [Expr] -> State Env Expr
 -- listFn [EComb []] = return ENull
@@ -108,7 +108,7 @@ listFn exprs = do
   xs <- mapM evalExpr exprs
   return . EComb $ xs
 
--- append
+--- append
 
 doAppend :: [Expr] -> [Expr]
 doAppend [] = []
@@ -120,7 +120,7 @@ appendFn exprs = do
   xs <- mapM evalExpr exprs
   return . EComb $ doAppend xs
 
--- car
+--- car
 
 carFn :: [Expr] -> State Env Expr
 carFn [ex] = do
@@ -130,7 +130,7 @@ carFn [ex] = do
     _           -> illegalArguments "car"
 carFn _ = illegalArguments "car"
 
--- cdr
+--- cdr
 
 cdrFn :: [Expr] -> State Env Expr
 cdrFn [ex] = do
@@ -140,7 +140,7 @@ cdrFn [ex] = do
     _              -> illegalArguments "cdr"
 cdrFn _ = illegalArguments "cdr"
 
--- null?
+--- null?
 
 nullFn :: [Expr] -> State Env Expr
 nullFn [ex] = do
@@ -150,16 +150,21 @@ nullFn [ex] = do
     _        -> return . EValue . VBool $ False
 nullFn _ = illegalArguments "null?"
 
--- define
+--- define
 
 defFn :: [Expr] -> State Env Expr
+-- vals, lambdas
 defFn [ESymbol name, ex] = do
   x <- evalExpr ex
   modify $ Env . addEntry name x . getEnv
   return ENull
-defFn _ = illegalArguments "define"
+-- functions
+defFn (EComb (ESymbol name : params) : body) = do
+  modify $ Env . addEntry name (EFunc params body) . getEnv
+  return ENull
+defFn e = illegalArguments $ "define" ++ show e
 
--- let
+--- let
 
 doBinds :: [Expr] -> State Env Expr
 doBinds (EComb c : rest) = do
@@ -175,6 +180,12 @@ letFn [EComb binds, body] = do
   modify dropFrame
   return res
 letFn _ = illegalArguments "let"
+
+--- lambda
+
+lambdaFn :: [Expr] -> State Env Expr
+lambdaFn (EComb params : body) = return $ EFunc params body
+lambdaFn _ = illegalArguments "lambda"
 
 -------------------------------------------------------------------
 
@@ -202,6 +213,8 @@ baseEnv = Env [M.fromList [ ("+",    EProc $ aritFn (+))
                           , ("null?",  EProc nullFn)
 
                           , ("define", EProc defFn)
+                          , ("lambda", EProc lambdaFn)
                           , ("let",    EProc letFn)
 
-                           ]]
+                          , ("begin",  EProc evalExprs)
+                          ]]

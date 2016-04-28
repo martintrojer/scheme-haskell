@@ -13,9 +13,9 @@ data Expr
   = EValue Value
   | ESymbol String
   | EComb [Expr]
-  | ENull
-
   | EProc ([Expr] -> State Env Expr)
+
+  | ENull
 
 newtype Env = Env { getEnv :: Map String Expr}
 
@@ -27,10 +27,10 @@ instance Show Value where
 
 instance Show Expr where
   show (EValue v)  = show v
-  show ENull       = "nil"
   show (ESymbol v) = "#" ++ v
   show (EComb vs)  = show vs
   show (EProc _)   = "Fn"
+  show ENull       = "nil"
 
 instance Eq Expr where
   EValue v1  == EValue v2  = v1 == v2

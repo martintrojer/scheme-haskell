@@ -87,6 +87,77 @@ condFn (EComb c:rest) =
 condFn [] = return ENull
 condFn _  = illegalArguments "cond"
 
+-- define
+
+defFn :: [Expr] -> State Env Expr
+defFn [ESymbol name, ex] = do
+  x <- evalExpr ex
+  modify $ Env . M.insert name x . getEnv
+  return ENull
+defFn _ = illegalArguments "define"
+
+-- cons
+
+consFn :: [Expr] -> State Env Expr
+consFn [e1, e2] = do
+  x1 <- evalExpr e1
+  x2 <- evalExpr e2
+  case (x1, x2) of
+    (ex1, ENull) -> return . EComb $ [ex1]
+    (ex1, EComb xs) -> return . EComb $ ex1 : xs
+    (ex1, ex2) -> return . EComb $ [ex1, ex2]
+consFn _ = illegalArguments "cons"
+
+-- list
+
+listFn :: [Expr] -> State Env Expr
+-- listFn [EComb []] = return ENull
+listFn exprs = do
+  xs <- mapM evalExpr exprs
+  return . EComb $ xs
+
+-- append
+
+doAppend :: [Expr] -> [Expr]
+doAppend [] = []
+doAppend (EComb l : rest) = l ++ doAppend rest
+doAppend _ = illegalArguments "append"
+
+appendFn :: [Expr] -> State Env Expr
+appendFn exprs = do
+  xs <- mapM evalExpr exprs
+  return . EComb $ doAppend xs
+
+-- car
+
+carFn :: [Expr] -> State Env Expr
+carFn [ex] = do
+  x <- evalExpr ex
+  case x of
+    EComb (h:_) -> return h
+    _           -> illegalArguments "car"
+carFn _ = illegalArguments "car"
+
+-- cdr
+
+cdrFn :: [Expr] -> State Env Expr
+cdrFn [ex] = do
+  x <- evalExpr ex
+  case x of
+    EComb (_:rest) -> return . EComb $ rest
+    _              -> illegalArguments "cdr"
+cdrFn _ = illegalArguments "cdr"
+
+-- null?
+
+nullFn :: [Expr] -> State Env Expr
+nullFn [ex] = do
+  x <- evalExpr ex
+  case x of
+    EComb [] -> return . EValue . VBool $ True
+    _        -> return . EValue . VBool $ False
+nullFn _ = illegalArguments "null?"
+
 -------------------------------------------------------------------
 
 baseEnv :: Env
@@ -101,7 +172,17 @@ baseEnv = Env $ M.fromList [ ("+",    EProc $ aritFn (+))
                            , (">=",   EProc $ compFn (>=))
                            , ("<=",   EProc $ compFn (<=))
 
-                           , ("not",  EProc notFn)
-                           , ("if",   EProc ifFn)
-                           , ("cond", EProc condFn)
+                           , ("not",    EProc notFn)
+                           , ("if",     EProc ifFn)
+                           , ("cond",   EProc condFn)
+
+                           , ("define", EProc defFn)
+
+                           , ("cons",   EProc consFn)
+                           , ("list",   EProc listFn)
+                           , ("append", EProc appendFn)
+                           , ("car",    EProc carFn)
+                           , ("cdr",    EProc cdrFn)
+                           , ("null?",  EProc nullFn)
+
                            ]

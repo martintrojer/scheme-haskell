@@ -12,7 +12,7 @@ num :: Parser Double
 num = read <$> many1 (oneOf "0123456789.") <* spaces
 
 name :: Parser String
-name = many1 (oneOf "abcdefghijklmnopqrstuvwxyz+-*/=<>") <* spaces
+name = many1 (oneOf "abcdefghijklmnopqrstuvwxyz+-*/=<>?") <* spaces
 
 str :: Parser Value
 str = do

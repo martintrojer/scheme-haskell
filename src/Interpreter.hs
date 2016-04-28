@@ -1,9 +1,9 @@
 module Interpreter(evalExpr, eval) where
 
 import qualified Control.Monad.Trans.State as S
-import qualified Data.Map as M
 import qualified Data.Functor.Identity as I
 import Types
+import Env
 
 evalExpr :: Expr -> S.State Env Expr
 
@@ -11,9 +11,7 @@ evalExpr v@(EValue _) = return v
 
 evalExpr (ESymbol s) = do
   env <- S.get
-  case M.lookup s $ getEnv env of
-    Just res -> evalExpr res
-    Nothing  -> error $ "Unknown symbol '" ++ s ++ "'"
+  return . envLookup s $ getEnv env
 
 evalExpr p@(EProc _) = return p
 

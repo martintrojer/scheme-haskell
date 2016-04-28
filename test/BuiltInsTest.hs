@@ -83,13 +83,6 @@ testBuiltIns = hspec $ do
       evalStr "(cond (false 1) (false 2) (else 3))" `shouldBe` num 3
       evalStr "(cond (false 1) (false 2))"          `shouldBe` ENull
 
-  describe "define" $
-    it "define" $
-      let (res, env) = evalBase "(define kalle (+ 41 1))"
-      in do
-        res `shouldBe` ENull
-        (fst . eval' env $ "kalle") `shouldBe` num 42
-
   describe "cons" $
     it "cons" $ do
       evalStr "(cons 1 2)" `shouldBe` EComb [num 1, num 2]
@@ -126,3 +119,23 @@ testBuiltIns = hspec $ do
       evalStr "(null? (list))" `shouldBe` true
       evalStr "(null? (list 1))" `shouldBe` false
       evalStr "(null? (cdr (list 1)))" `shouldBe` true
+
+  describe "define" $
+    it "define" $
+      let (res, env) = evalBase "(define kalle (+ 41 1))"
+      in do
+        res `shouldBe` ENull
+        (fst . eval' env $ "kalle") `shouldBe` num 42
+
+  describe "let" $ do
+    it "let" $ do
+      evalStr "(let ((a 1)) a)" `shouldBe` num 1
+      evalStr "(let ((a 1)(b (+ 1 1))) (+ a b))" `shouldBe` num 3
+
+    it "let - dirty env" $
+      let (_, env1)    = evalBase "(define a 1)"
+          (res2, env2) = eval' env1 "(let ((a 42)) a)"
+      in do
+        (fst . eval' env1 $ "a") `shouldBe` num 1
+        res2 `shouldBe` num 42
+        (fst . eval' env2 $ "a") `shouldBe` num 1

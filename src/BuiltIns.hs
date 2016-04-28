@@ -5,6 +5,7 @@ import Control.Monad.Trans.State
 import qualified Data.Map as M
 import Interpreter
 import Types
+import Env
 
 --- +, -, *, /
 
@@ -87,15 +88,6 @@ condFn (EComb c:rest) =
 condFn [] = return ENull
 condFn _  = illegalArguments "cond"
 
--- define
-
-defFn :: [Expr] -> State Env Expr
-defFn [ESymbol name, ex] = do
-  x <- evalExpr ex
-  modify $ Env . M.insert name x . getEnv
-  return ENull
-defFn _ = illegalArguments "define"
-
 -- cons
 
 consFn :: [Expr] -> State Env Expr
@@ -158,31 +150,58 @@ nullFn [ex] = do
     _        -> return . EValue . VBool $ False
 nullFn _ = illegalArguments "null?"
 
+-- define
+
+defFn :: [Expr] -> State Env Expr
+defFn [ESymbol name, ex] = do
+  x <- evalExpr ex
+  modify $ Env . addEntry name x . getEnv
+  return ENull
+defFn _ = illegalArguments "define"
+
+-- let
+
+doBinds :: [Expr] -> State Env Expr
+doBinds (EComb c : rest) = do
+  _ <- defFn c
+  doBinds rest
+doBinds _ = return ENull
+
+letFn :: [Expr] -> State Env Expr
+letFn [EComb binds, body] = do
+  modify addFrame
+  _ <- doBinds binds
+  res <- evalExpr body
+  modify dropFrame
+  return res
+letFn _ = illegalArguments "let"
+
 -------------------------------------------------------------------
 
 baseEnv :: Env
-baseEnv = Env $ M.fromList [ ("+",    EProc $ aritFn (+))
-                           , ("-",    EProc $ aritFn (-))
-                           , ("*",    EProc $ aritFn (*))
-                           , ("/",    EProc $ aritFn (/))
+baseEnv = Env [M.fromList [ ("+",    EProc $ aritFn (+))
+                          , ("-",    EProc $ aritFn (-))
+                          , ("*",    EProc $ aritFn (*))
+                          , ("/",    EProc $ aritFn (/))
 
-                           , ("=",    EProc $ compFn (==))
-                           , (">",    EProc $ compFn (>))
-                           , ("<",    EProc $ compFn (<))
-                           , (">=",   EProc $ compFn (>=))
-                           , ("<=",   EProc $ compFn (<=))
+                          , ("=",    EProc $ compFn (==))
+                          , (">",    EProc $ compFn (>))
+                          , ("<",    EProc $ compFn (<))
+                          , (">=",   EProc $ compFn (>=))
+                          , ("<=",   EProc $ compFn (<=))
 
-                           , ("not",    EProc notFn)
-                           , ("if",     EProc ifFn)
-                           , ("cond",   EProc condFn)
+                          , ("not",    EProc notFn)
+                          , ("if",     EProc ifFn)
+                          , ("cond",   EProc condFn)
 
-                           , ("define", EProc defFn)
+                          , ("cons",   EProc consFn)
+                          , ("list",   EProc listFn)
+                          , ("append", EProc appendFn)
+                          , ("car",    EProc carFn)
+                          , ("cdr",    EProc cdrFn)
+                          , ("null?",  EProc nullFn)
 
-                           , ("cons",   EProc consFn)
-                           , ("list",   EProc listFn)
-                           , ("append", EProc appendFn)
-                           , ("car",    EProc carFn)
-                           , ("cdr",    EProc cdrFn)
-                           , ("null?",  EProc nullFn)
+                          , ("define", EProc defFn)
+                          , ("let",    EProc letFn)
 
-                           ]
+                           ]]

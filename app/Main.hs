@@ -1,16 +1,24 @@
 module Main where
 
+import System.IO
 import BuiltIns
 import Interpreter
 import Parser
 import Types
 
-evalStr :: String -> Expr
-evalStr str =
-  case parseExpr str of
-    Just expr -> fst . eval baseEnv $ expr
-    Nothing -> error "Parse error"
+repl :: Env -> IO ()
+repl env = do
+  putStr "> "
+  hFlush stdout
+  input <- getLine
+  case parseExpr input of
+    Just expr -> do
+      let (res, newEnv) = eval env expr
+      print res
+      repl newEnv
+    Nothing -> putStrLn "parse error"
 
 main :: IO ()
-main =
-  putStrLn . show $ evalStr "(+ 1 1)"
+main = do
+  putStrLn "Welcome to mtscheme v0.1"
+  repl baseEnv

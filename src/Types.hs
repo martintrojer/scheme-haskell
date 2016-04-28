@@ -15,7 +15,6 @@ data Expr
   | EComb [Expr]
   | EProc ([Expr] -> State Env Expr)
   | EFunc [Expr] [Expr]
-
   | ENull
 
 type Frame = Map String Expr

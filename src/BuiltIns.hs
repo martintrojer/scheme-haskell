@@ -190,16 +190,16 @@ lambdaFn _ = illegalArguments "lambda"
 -------------------------------------------------------------------
 
 baseEnv :: Env
-baseEnv = Env [M.fromList [ ("+",    EProc $ aritFn (+))
-                          , ("-",    EProc $ aritFn (-))
-                          , ("*",    EProc $ aritFn (*))
-                          , ("/",    EProc $ aritFn (/))
+baseEnv = Env [M.fromList [ ("+",      EProc $ aritFn (+))
+                          , ("-",      EProc $ aritFn (-))
+                          , ("*",      EProc $ aritFn (*))
+                          , ("/",      EProc $ aritFn (/))
 
-                          , ("=",    EProc $ compFn (==))
-                          , (">",    EProc $ compFn (>))
-                          , ("<",    EProc $ compFn (<))
-                          , (">=",   EProc $ compFn (>=))
-                          , ("<=",   EProc $ compFn (<=))
+                          , ("=",      EProc $ compFn (==))
+                          , (">",      EProc $ compFn (>))
+                          , ("<",      EProc $ compFn (<))
+                          , (">=",     EProc $ compFn (>=))
+                          , ("<=",     EProc $ compFn (<=))
 
                           , ("not",    EProc notFn)
                           , ("if",     EProc ifFn)

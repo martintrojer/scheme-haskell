@@ -14,11 +14,7 @@ addEntry s ex (f:rest) = M.insert s ex f : rest
 addEntry _ _ _ = error "Inavlid environment"
 
 addFrame :: Env -> Env
-addFrame env =
-  Env $ M.empty : envs
-  where envs = getEnv env
+addFrame env = Env $ M.empty : getEnv env
 
 dropFrame :: Env -> Env
-dropFrame env =
-  Env envs
-  where (_ : envs) = getEnv env
+dropFrame = Env . tail . getEnv

@@ -14,8 +14,6 @@ evalExpr (ESymbol s) = do
   env <- S.get
   return . envLookup s $ getEnv env
 
-evalExpr p@(EProc _) = return p
-
 evalExpr (EComb (ex:rest)) = do
   x <- evalExpr ex
   case x of

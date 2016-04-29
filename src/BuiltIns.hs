@@ -1,6 +1,5 @@
 module BuiltIns (baseEnv) where
 
-import Control.Monad
 import Control.Monad.Trans.State
 import qualified Data.Map as M
 import Interpreter

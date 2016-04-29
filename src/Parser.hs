@@ -23,20 +23,16 @@ str = do
   return $ VStr val
 
 true :: Parser Value
-true = do
-  _ <- string "true"
-  spaces
-  return $ VBool True
+true = string "#t" *> spaces *> return (VBool True)
 
 false :: Parser Value
-false = do
-  _ <- string "false"
-  spaces
-  return $ VBool False
+false = string "#f" *> spaces *> return (VBool False)
 
 value :: Parser Value
-value =
-  VNum <$> num <|> str <|> try true <|> try false
+value = VNum <$> num
+  <|> str
+  <|> try true
+  <|> false
 
 comb :: Parser Expr
 comb = do
@@ -49,8 +45,7 @@ comb = do
   return $ EComb exprs
 
 expr :: Parser Expr
-expr =
-  EValue <$> value
+expr = EValue <$> value
   <|> ESymbol <$> name
   <|> comb
 

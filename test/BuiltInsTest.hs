@@ -73,15 +73,15 @@ testBuiltIns = hspec $ do
     it "if" $ do
       evalStr "(if (< 2 1) 10 11)"                  `shouldBe` num 11
       evalStr "(if (< (+ 1 1 1) 1) 11 (* 2 5))"     `shouldBe` num 10
-      evalStr "(if true 1)"                         `shouldBe` num 1
-      evalStr "(if false 1)"                        `shouldBe` ENull
+      evalStr "(if #t 1)"                           `shouldBe` num 1
+      evalStr "(if #f 1)"                           `shouldBe` ENull
 
   describe "cond" $
     it "cond" $ do
-      evalStr "(cond (true 1) ((= 1 2) 2))"         `shouldBe` num 1
-      evalStr "(cond ((= 1 2) 1) (true 2))"         `shouldBe` num 2
-      evalStr "(cond (false 1) (false 2) (else 3))" `shouldBe` num 3
-      evalStr "(cond (false 1) (false 2))"          `shouldBe` ENull
+      evalStr "(cond (#t 1) ((= 1 2) 2))"           `shouldBe` num 1
+      evalStr "(cond ((= 1 2) 1) (#t 2))"           `shouldBe` num 2
+      evalStr "(cond (#f 1) (#f 2) (else 3))"       `shouldBe` num 3
+      evalStr "(cond (#f 1) (#f 2))"                `shouldBe` ENull
 
   describe "cons" $
     it "cons" $ do
